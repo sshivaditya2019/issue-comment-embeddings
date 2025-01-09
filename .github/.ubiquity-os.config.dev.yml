@@ -1,0 +1,18 @@
+plugins:
+  - skipBotEvents: false
+    uses:
+      - plugin: ShivTestOrg/personal-agent-bridge@clean-commits
+        with: {}
+  - uses:
+    - plugin: ShivTestOrg/issue-comment-embeddings@linkref
+      with: 
+        matchThreshold: 0.9
+        warningThreshold: 0.7
+        jobMatchingThreshold: 0.7
+  - uses:
+    - plugin: ShivTestOrg/command-ask:compute.yml@context
+      with: 
+        model: "openai/o1-mini"
+        openAiBaseUrl: "https://openrouter.ai/api/v1"
+        maxTokens: 100000
+        maxDepth: 10
