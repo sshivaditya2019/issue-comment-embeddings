@@ -8,7 +8,14 @@ export async function addComments(context: Context<"issue_comment.created">) {
     payload,
   } = context;
   const comment = payload.comment;
-  const markdown = comment.body;
+  const isPrivate = payload.repository.private;
+  const redactPrivateRepoComments = context.pluginConfig?.redactPrivateRepoComments ?? false;
+  let markdown = comment.body;
+  
+  if (isPrivate && redactPrivateRepoComments && markdown) {
+    markdown = '[REDACTED]';
+    logger.info('Content redacted due to private repository setting');
+  }
   const authorId = comment.user?.id || -1;
   const id = comment.node_id;
   const isPrivate = payload.repository.private;
@@ -17,15 +24,31 @@ export async function addComments(context: Context<"issue_comment.created">) {
   try {
     if (!markdown) {
       logger.error("Comment body is empty");
+      return;
     }
     if (context.payload.issue.pull_request) {
       logger.error("Comment is on a pull request");
+      return;
     }
     if ((await supabase.issue.getIssue(issueId)) === null) {
       logger.info("Parent issue not found, creating new issue", { "Issue ID": issueId });
       await addIssue(context as unknown as Context<"issues.opened">);
     }
-    await supabase.comment.createComment({ markdown, id, author_id: authorId, payload, isPrivate, issue_id: issueId });
+
+    let commentMarkdown = markdown;
+    if (isPrivate && context.settings.redactPrivateRepoComments) {
+      logger.info("Redacting comment content for private repository");
+      commentMarkdown = "[REDACTED]";
+    }
+
+    await supabase.comment.createComment({ 
+      markdown: commentMarkdown, 
+      id, 
+      author_id: authorId, 
+      payload, 
+      isPrivate, 
+      issue_id: issueId 
+    });
     logger.ok(`Successfully created comment!`, comment);
   } catch (error) {
     if (error instanceof Error) {
