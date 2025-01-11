@@ -13,6 +13,8 @@ export const pluginSettingsSchema = T.Object(
     warningThreshold: T.Number({ default: 0.75 }),
     jobMatchingThreshold: T.Number({ default: 0.75 }),
     alwaysRecommend: T.Optional(T.Number({ default: 0 })),
+    redactPrivateRepoComments: T.Optional(T.Boolean({ default: false })),
+    redactPrivateRepoComments: T.Optional(T.Boolean({ default: false })),
   },
   { default: {} }
 );
